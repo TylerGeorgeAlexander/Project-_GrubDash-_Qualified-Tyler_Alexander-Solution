@@ -23,22 +23,54 @@ const nextId = require("../utils/nextId");
 
 // TODO
 function create(req, res) {
-    const { data: { href } = {} } = req.body;
-    const newUrls = {
-      id: urls.length + 1,
-      href,
-    };
-    urls.push(newUrls);
-    res.status(201).json({ data: newUrls });
+  const { data: { href } = {} } = req.body;
+  const newUrls = {
+    id: urls.length + 1,
+    href,
+  };
+  urls.push(newUrls);
+  res.status(201).json({ data: newUrls });
+}
+// Validation functions
+function nameValidation(req, res, next) {
+  const { data: { name } = {} } = req.body;
+
+  if (name && name !== "") {
+    return next();
   }
+  next({ status: 400, message: "Dish must include a name" });
+}
 
-function nameValidation(req, res, next){
-    const { data: { name } = {} } = req.body;
+function descriptionValidation(req, res, next) {
+  const { data: { description } = {} } = req.body;
 
-    if (name) {
-      return next();
-    }
-    next({ status: 400, message: "A 'href' property is required." });
+  if (description && description !== "") {
+    return next();
+  }
+  next({ status: 400, message: "Dish must include a description" });
+}
+
+function priceValidation(req, res, next) {
+  const { data: { price } = {} } = req.body;
+
+  if (price && Number.isInteger(price) && price <= 0) {
+    return next();
+  } else if (!price) {
+    return next({ status: 400, message: "Dish must include a price" });
+  }
+  next({
+    status: 400,
+    message: "Dish must have a price that is an integer greater than 0",
+  });
+}
+
+function imageUrlValidation(req, res, next) {
+  const { data: { image_url } = {} } = req.body;
+
+  if (image_url && image_url !== "") {
+    return next();
+  }
+  next({ status: 400, message: "Dish must include a image_url" });
 }
 
 // DONE
@@ -62,8 +94,8 @@ function list(req, res, next) {
 }
 
 module.exports = {
-  create,
+  create: [nameValidation, descriptionValidation, priceValidation, imageUrlValidation, create],
   read,
-  update,
+  update: [nameValidation, descriptionValidation, priceValidation, imageUrlValidation, update],
   list,
 };
