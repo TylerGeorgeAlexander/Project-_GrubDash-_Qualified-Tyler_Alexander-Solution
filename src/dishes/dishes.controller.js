@@ -1,5 +1,4 @@
 const path = require("path");
-
 // Use the existing dishes data
 const dishes = require(path.resolve("src/data/dishes-data"));
 
@@ -60,7 +59,7 @@ function priceValidation(req, res, next) {
 
   if (price) {
     return next({ status: 400, message: "Dish must include a price" });
-} else if (typeof data.price !== "number" || data.price < 1) {
+} else if (typeof price !== "number" || price < 1) {
     return next({
         status: 400,
         message: "Dish must have a price that is an integer greater than 0",
