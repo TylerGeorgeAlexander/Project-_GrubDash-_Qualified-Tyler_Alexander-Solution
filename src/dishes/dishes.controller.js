@@ -21,57 +21,26 @@ const nextId = require("../utils/nextId");
 }
 */
 
-// Ex create
-
-function create(req, res, next) {
-  const { data } = req.body;
-  if (!data) {
-    return next({
-      status: 400,
-      message: "body must have `data` key",
-    });
-  }
-}
-
-function hasValidProperties(req, res, next) {
-  const { data } = req.body;
-  const requiredFields = ["name", "description", "image_url", "price"];
-  for (const field of requiredFields) {
-    if (!data[field]) {
-      return next({
-        status: 400,
-        message: `Dish must include ${field}`,
-      });
-    }
-    if (typeof data.price !== "number" || data.price < 1){
-        return next({
-            status: 400,
-            message: `Dish must have a price that is an integer greater than 0`,
-          });
-    }
-  }
-}
-
 // TODO
-// function create(req, res) {
-//   const { data: { href } = {} } = req.body;
-//   const newDish = {
-//     id: nextId,
-//     name,
-//     description,
-//     price,
-//     image_url,
-//   };
-//   dishes.push(newDish);
-//   res.status(201).json({ data: newDish });
-// }
+function create(req, res) {
+  const { data: { obj } = {} } = req.body;
+  const newDish = {
+    id: nextId,
+    name,
+    description,
+    price,
+    image_url,
+  };
+  dishes.push(newDish);
+  res.status(201).json({ data: newDish });
+}
 
 // Validation functions
-/*
+
 function nameValidation(req, res, next) {
   const { data: { name } = {} } = req.body;
 
-  if (name && name !== "") {
+  if (name) {
     return next();
   }
   next({ status: 400, message: "Dish must include a name" });
@@ -80,7 +49,7 @@ function nameValidation(req, res, next) {
 function descriptionValidation(req, res, next) {
   const { data: { description } = {} } = req.body;
 
-  if (description && description !== "") {
+  if (description) {
     return next();
   }
   next({ status: 400, message: "Dish must include a description" });
@@ -89,26 +58,25 @@ function descriptionValidation(req, res, next) {
 function priceValidation(req, res, next) {
   const { data: { price } = {} } = req.body;
 
-  if (price && Number.isInteger(price) && price <= 0) {
-    return next();
-  } else if (!price) {
+  if (price) {
     return next({ status: 400, message: "Dish must include a price" });
-  }
-  next({
-    status: 400,
-    message: "Dish must have a price that is an integer greater than 0",
-  });
+} else if (typeof data.price !== "number" || data.price < 1) {
+    return next({
+        status: 400,
+        message: "Dish must have a price that is an integer greater than 0",
+    });
+}
+return next();
 }
 
 function imageUrlValidation(req, res, next) {
   const { data: { image_url } = {} } = req.body;
 
-  if (image_url && image_url !== "") {
+  if (image_url) {
     return next();
   }
   next({ status: 400, message: "Dish must include a image_url" });
 }
-*/
 
 // DONE
 function read(req, res) {
@@ -118,17 +86,13 @@ function read(req, res) {
 }
 
 // TODO
-// function update(req, res) {
-//   // const foundUse = res.locals.use;
-//   const dishId = Number(req.params.dishId);
-//   const foundUse = dishes.find((dish) => dish.id === dishId);
-//   const { data: { text } = {} } = req.body;
-//   foundUse.text = text;
-//   res.json({ data: foundUse });
-// }
-
-function update(req, res, next) {
-  res.json({});
+function update(req, res) {
+  // const foundUse = res.locals.use;
+  const dishId = Number(req.params.dishId);
+  const foundUse = dishes.find((dish) => dish.id === dishId);
+  const { data: { text } = {} } = req.body;
+  foundUse.text = text;
+  res.json({ data: foundUse });
 }
 
 // DONE
@@ -137,8 +101,8 @@ function list(req, res) {
 }
 
 module.exports = {
-  create: [hasValidProperties, create],
+  create: [nameValidation, descriptionValidation,priceValidation,imageUrlValidation, create],
   read,
-  update: [hasValidProperties, update],
+  update: [nameValidation, descriptionValidation,priceValidation,imageUrlValidation, update],
   list,
 };
