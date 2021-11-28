@@ -74,19 +74,24 @@ function read(req, res, next) {
 
 // TODO
 function update(req, res) {
-  // const foundUse = res.locals.use;
-  const orderId = req.params.orderId;
-  const orderFound = orders.find((order) => order.id === orderId);
-  const { data: { text } = {} } = req.body;
-  orderFound.text = text;
-  res.json({ data: orderFound });
+  const { data: { deliverTo, mobileNumber, dishes, status } = {} } = req.body;
+
+  res.locals.order = {
+    id: res.locals.order["id"],
+    deliverTo,
+    mobileNumber,
+    dishes,
+    status,
+  };
+
+  res.json({ data: res.locals.order });
 }
 
 function orderExists(req, res, next) {
   const orderId = req.params.orderId;
   const foundOrder = orders.find((order) => order.id === orderId);
   if (foundOrder) {
-    res.locals.use = foundOrder;
+    res.locals.order = foundOrder;
     return next();
   }
   if (orders.id !== req.body.orderId) {

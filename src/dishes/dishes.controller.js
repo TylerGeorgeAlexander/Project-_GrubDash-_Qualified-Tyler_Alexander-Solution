@@ -92,10 +92,10 @@ function update(req, res) {
 
   res.locals.dish = {
     id: res.locals.dishId,
-    name: name,
-    description: description,
-    price: price,
-    image_url: image_url,
+    name,
+    description,
+    price,
+    image_url,
   };
 
   res.json({ data: res.locals.dish });
