@@ -1,8 +1,7 @@
 const path = require("path");
 // Use the existing order data
 const orders = require(path.resolve("src/data/orders-data"));
-// Use the existing dishes data
-const dishes = require(path.resolve("src/data/dishes-data"));
+// const dishes = require(path.resolve("src/data/dishes-data"));
 
 // Use this function to assigh ID's when necessary
 const nextId = require("../utils/nextId");
@@ -10,13 +9,10 @@ const nextId = require("../utils/nextId");
 // ORDERS
 // TODO
 function create(req, res) {
-  const { data: { obj } = {} } = req.body;
+  const { data: obj = {} } = req.body;
   const newOrder = {
-    id: nextId,
-    deliverTo,
-    mobileNumber,
-    status,
-    dishes,
+    id: nextId(),
+    ...obj,
   };
   orders.push(newOrder);
   res.status(201).json({ data: newOrder });
@@ -42,21 +38,17 @@ function mobileNumberValidation(req, res, next) {
 
 function dishesValidation(req, res, next) {
   const { data: { dishes } = {} } = req.body;
-  if (dishes) {
-    return next();
+  if (!Array.isArray(dishes) || !dishes || dishes.length === 0) {
+    return next({
+      status: 400,
+      message: "Order must include at least one dish",
+    });
   }
-  next({ status: 400, message: "Order must include at least one dish" });
+  return next();
 }
 
 function quantityValidation(req, res, next) {
-  const { data: { quantity } = {} } = req.body;
-  if (quantity) {
-    return next();
-  }
-  next({
-    status: 400,
-    message: `Dish ${index} must have a quantity that is an integer greater than 0`,
-  });
+  next();
 }
 
 // DONE
@@ -69,11 +61,30 @@ function read(req, res) {
 // TODO
 function update(req, res) {
   // const foundUse = res.locals.use;
-  const orderId = Number(req.params.orderId);
+  const orderId = req.params.orderId;
   const orderFound = orders.find((order) => order.id === orderId);
   const { data: { text } = {} } = req.body;
   orderFound.text = text;
   res.json({ data: orderFound });
+}
+
+function orderExists(req, res, next) {
+  const orderId = req.params.orderId;
+  const foundOrder = orders.find((order) => order.id === orderId);
+  if (foundOrder) {
+    res.locals.use = foundOrder;
+    return next();
+  }
+  if (orders.id !== req.body.orderId) {
+    next({
+      status: 404,
+      message: `Order id does not match route id. Order: ${orders.id}, Route: ${orderId}.`,
+    });
+  }
+  next({
+    status: 404,
+    message: `${orderId}`,
+  });
 }
 
 function destroy(req, res) {
@@ -104,8 +115,9 @@ module.exports = {
     mobileNumberValidation,
     dishesValidation,
     quantityValidation,
+    orderExists,
     update,
   ],
-  delete: [destroy],
+  delete: [orderExists, destroy],
   list,
 };
