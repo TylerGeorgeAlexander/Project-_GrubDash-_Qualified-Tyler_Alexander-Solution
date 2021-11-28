@@ -7,7 +7,6 @@ const orders = require(path.resolve("src/data/orders-data"));
 const nextId = require("../utils/nextId");
 
 // ORDERS
-// TODO
 function create(req, res) {
   const { data: obj = {} } = req.body;
   const newOrder = {
@@ -19,7 +18,6 @@ function create(req, res) {
 }
 
 // Validation functions
-
 function deliverToValidation(req, res, next) {
   const { data: { deliverTo } = {} } = req.body;
   if (deliverTo) {
@@ -48,6 +46,15 @@ function dishesValidation(req, res, next) {
 }
 
 function quantityValidation(req, res, next) {
+  const dishes = req.body.data.dishes;
+  for (let index = 0; index < dishes.length; index++) {
+    if (!dishes[index].quantity || typeof dishes[index].quantity !== "number") {
+      return next({
+        status: 400,
+        message: `Dish ${index} must have a quantity that is an integer greater than 0`,
+      });
+    }
+  }
   next();
 }
 
