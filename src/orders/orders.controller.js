@@ -58,11 +58,18 @@ function quantityValidation(req, res, next) {
   next();
 }
 
-// DONE
-function read(req, res) {
+function read(req, res, next) {
   const { orderId } = req.params;
   const orderFound = orders.find((order) => order.id === orderId);
-  res.json({ data: orderFound });
+
+  if (orderFound) {
+    res.json({ data: orderFound });
+    return next();
+  }
+  next({
+    status: 404,
+    message: `Order id does not exist: ${orderId}`,
+  });
 }
 
 // TODO
@@ -103,7 +110,6 @@ function destroy(req, res) {
   res.sendStatus(204);
 }
 
-// DONE
 function list(req, res) {
   res.json({ data: orders });
 }
