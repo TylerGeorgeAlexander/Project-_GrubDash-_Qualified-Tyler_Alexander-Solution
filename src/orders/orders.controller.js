@@ -17,6 +17,41 @@ function create(req, res) {
   res.status(201).json({ data: newOrder });
 }
 
+function read(req, res, next) {
+  const { orderId } = req.params;
+  const orderFound = orders.find((order) => order.id === orderId);
+
+  if (orderFound) {
+    res.json({ data: orderFound });
+    return next();
+  }
+  next({
+    status: 404,
+    message: `Order id does not exist: ${orderId}`,
+  });
+}
+
+function update(req, res) {
+  const { data: { deliverTo, mobileNumber, dishes, status } = {} } = req.body;
+
+  res.locals.order = {
+    id: res.locals.order["id"],
+    deliverTo,
+    mobileNumber,
+    dishes,
+    status,
+  };
+
+  res.json({ data: res.locals.order });
+}
+
+function destroy(req, res) {
+  const orderIndex = orders.indexOf(res.locals.order);
+  orders.splice(orderIndex, 1);
+
+  res.sendStatus(204);
+}
+
 // Validation functions
 function deliverToValidation(req, res, next) {
   const { data: { deliverTo } = {} } = req.body;
@@ -58,65 +93,68 @@ function quantityValidation(req, res, next) {
   next();
 }
 
-function read(req, res, next) {
-  const { orderId } = req.params;
-  const orderFound = orders.find((order) => order.id === orderId);
+function statusValidator(req, res, next) {
+  const { data: { status } = {} } = req.body;
 
-  if (orderFound) {
-    res.json({ data: orderFound });
+  if (
+    status !== ("pending" || "preparing" || "out-for-delivery" || "delivered")
+  ) {
+    return next({
+      status: 400,
+      message:
+        "Order must have a status of pending, preparing, out-for-delivery, delivered",
+    });
+  }
+  if (status === "delivered") {
+    return next({
+      status: 400,
+      message: "A delivered order cannot be changed",
+    });
+  }
+  next();
+}
+
+function orderExists(req, res, next) {
+  const { orderId } = req.params;
+  const foundOrder = orders.find((order) => order.id === orderId);
+
+  if (foundOrder) {
+    res.locals.order = foundOrder;
     return next();
   }
+
   next({
     status: 404,
     message: `Order id does not exist: ${orderId}`,
   });
 }
 
-// TODO
-function update(req, res) {
-  const { data: { deliverTo, mobileNumber, dishes, status } = {} } = req.body;
-
-  res.locals.order = {
-    id: res.locals.order["id"],
-    deliverTo,
-    mobileNumber,
-    dishes,
-    status,
-  };
-
-  res.json({ data: res.locals.order });
-}
-
-function orderExists(req, res, next) {
-  const orderId = req.params.orderId;
-  const foundOrder = orders.find((order) => order.id === orderId);
-  if (foundOrder) {
-    res.locals.order = foundOrder;
-    return next();
-  }
-  if (orders.id !== req.body.orderId) {
-    next({
-      status: 404,
-      message: `Order id does not match route id. Order: ${orders.id}, Route: ${orderId}.`,
+function validateDestroy(req, res, next) {
+  if (res.locals.order.status !== "pending") {
+    return next({
+      status: 400,
+      message: "An order cannot be deleted unless it is pending",
     });
   }
-  next({
-    status: 404,
-    message: `${orderId}`,
-  });
-}
 
-function destroy(req, res) {
-  const { orderId } = req.params;
-  const index = orders.findIndex((order) => order.id === Number(orderId));
-  if (index > -1) {
-    orders.splice(index, 1);
-  }
-  res.sendStatus(204);
+  next();
 }
 
 function list(req, res) {
   res.json({ data: orders });
+}
+
+function matchId(req, res, next) {
+  const { orderId } = req.params;
+  const { id } = req.body.data;
+
+  if (id && id !== orderId) {
+    return next({
+      status: 400,
+      message: `Order id does not match route id. Order: ${id}, Route: ${orderId}`,
+    });
+  }
+  next();
 }
 
 module.exports = {
@@ -134,8 +172,10 @@ module.exports = {
     dishesValidation,
     quantityValidation,
     orderExists,
+    statusValidator,
+    matchId,
     update,
   ],
-  delete: [orderExists, destroy],
+  delete: [orderExists, validateDestroy, destroy],
   list,
 };
