@@ -15,6 +15,29 @@ function create(req, res) {
   res.status(201).json({ data: newDish });
 }
 
+function read(req, res) {
+  const dishFound = res.locals.dish;
+  res.json({ data: dishFound });
+}
+
+function update(req, res) {
+  const { data: { name, description, price, image_url } = {} } = req.body;
+
+  res.locals.dish = {
+    id: res.locals.dishId,
+    name,
+    description,
+    price,
+    image_url,
+  };
+
+  res.json({ data: res.locals.dish });
+}
+
+function list(req, res) {
+  res.json({ data: dishes });
+}
+
 // Validation functions
 function nameValidation(req, res, next) {
   const { data: { name } = {} } = req.body;
@@ -67,11 +90,6 @@ function idValidation(req, res, next) {
   next({ status: 404, message: `Dish does not exist: ${dishId}` });
 }
 
-function read(req, res) {
-  const dishFound = res.locals.dish;
-  res.json({ data: dishFound });
-}
-
 function updateValidation(req, res, next) {
   const { dishId } = req.params;
   const { data: { id } = {} } = req.body;
@@ -85,24 +103,6 @@ function updateValidation(req, res, next) {
     status: 400,
     message: `Dish id does not match route id. Dish: ${id}, Route: ${dishId}`,
   });
-}
-
-function update(req, res) {
-  const { data: { name, description, price, image_url } = {} } = req.body;
-
-  res.locals.dish = {
-    id: res.locals.dishId,
-    name,
-    description,
-    price,
-    image_url,
-  };
-
-  res.json({ data: res.locals.dish });
-}
-
-function list(req, res) {
-  res.json({ data: dishes });
 }
 
 module.exports = {
